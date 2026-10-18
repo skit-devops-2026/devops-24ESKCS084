@@ -9,6 +9,7 @@ RUN npm ci
 
 # Copy source code and build production bundle
 COPY Frontend/ ./
+ENV VITE_BASE_PATH=/
 RUN npm run build
 
 # Stage 2: Production Nginx web server

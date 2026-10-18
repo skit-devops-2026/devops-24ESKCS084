@@ -75,3 +75,51 @@ jobs:
           tags: |
             ghcr.io/${{ env.REPO_LOWER }}-frontend:latest
             ghcr.io/${{ env.REPO_LOWER }}-frontend:${{ github.sha }}
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd Frontend && npm ci
+
+      - name: Build static site
+        run: cd Frontend && npm run build
+        env:
+          VITE_BASE_PATH: /devops-24ESKCS084/
+
+      - name: Setup SPA fallback and health endpoint
+        run: |
+          cp Frontend/dist/index.html Frontend/dist/404.html
+          echo "{\"status\":\"healthy\",\"commit\":\"${{ github.sha }}\",\"service\":\"craftcv\"}" > Frontend/dist/health
+          echo "{\"status\":\"healthy\",\"commit\":\"${{ github.sha }}\",\"service\":\"craftcv\"}" > Frontend/dist/health.json
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: Frontend/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
