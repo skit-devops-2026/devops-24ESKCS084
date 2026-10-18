@@ -2,6 +2,44 @@ import { useRef } from "react"
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowDown } from "lucide-react"
 
+const SectionItem = ({ section }) => {
+    const ref = useRef(null);
+    const { scrollYProgress } = useScroll({
+        target: ref,
+        offset: ["start end", "center start"]
+    });
+
+    const opacityContent = useTransform(scrollYProgress, [0, 0.7], [0, 1]);
+    const clipProgress = useTransform(scrollYProgress, [0, 0.7], ["inset(0 100% 0 0)", "inset(0 0% 0 0)"]);
+    const translateContent = useTransform(scrollYProgress, [0, 1], [-50, 0]);
+
+    return (
+        <div
+            ref={ref}
+            className={`h-screen flex items-center justify-center md:gap-40 gap-20 ${section.reverse ? 'flex-row-reverse' : ''}`}>
+            <motion.div style={{ y: translateContent }}>
+                <div className="text-6xl max-w-sm elsie-black text-white">{section.title}</div>
+                <motion.p
+                    style={{ y: translateContent }}
+                    className="text-white/70 max-w-sm mt-10">
+                    {section.description}
+                </motion.p>
+            </motion.div>
+            <motion.div
+                style={{
+                    opacity: opacityContent,
+                    clipPath: clipProgress,
+                }}
+                className="relative">
+                <img
+                    src={section.imageUrl}
+                    className="size-80 object-cover"
+                    alt={`Section ${section.id}`} />
+            </motion.div>
+        </div>
+    );
+};
+
 export const Component = () => {
     const sections = [
         {
@@ -25,25 +63,7 @@ export const Component = () => {
             imageUrl: 'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&q=80',
             reverse: false
         }
-    ]
-
-    const sectionRefs = sections.map(() => useRef(null));
-
-    const scrollYProgress = sections.map((_, index) => {
-        return useScroll({
-            target: sectionRefs[index],
-            offset: ["start end", "center start"]
-        }).scrollYProgress;
-    });
-
-    const opacityContents = scrollYProgress.map(progress =>
-        useTransform(progress, [0, 0.7], [0, 1]));
-
-    const clipProgresses = scrollYProgress.map(progress =>
-        useTransform(progress, [0, 0.7], ["inset(0 100% 0 0)", "inset(0 0% 0 0)"]));
-
-    const translateContents = scrollYProgress.map(progress =>
-        useTransform(progress, [0, 1], [-50, 0]));
+    ];
 
     return (
         <div className="bg-black">
@@ -53,31 +73,8 @@ export const Component = () => {
             </div>
 
             <div className="flex flex-col md:px-0 px-10">
-                {sections.map((section, index) => (
-                    <div
-                        key={section.id}
-                        ref={sectionRefs[index]}
-                        className={`h-screen flex items-center justify-center md:gap-40 gap-20 ${section.reverse ? 'flex-row-reverse' : ''}`}>
-                        <motion.div style={{ y: translateContents[index] }}>
-                            <div className="text-6xl max-w-sm elsie-black text-white">{section.title}</div>
-                            <motion.p
-                                style={{ y: translateContents[index] }}
-                                className="text-white/70 max-w-sm mt-10">
-                                {section.description}
-                            </motion.p>
-                        </motion.div>
-                        <motion.div
-                            style={{
-                                opacity: opacityContents[index],
-                                clipPath: clipProgresses[index],
-                            }}
-                            className="relative">
-                            <img
-                                src={section.imageUrl}
-                                className="size-80 object-cover"
-                                alt={`Section ${section.id}`} />
-                        </motion.div>
-                    </div>
+                {sections.map((section) => (
+                    <SectionItem key={section.id} section={section} />
                 ))}
             </div>
 
